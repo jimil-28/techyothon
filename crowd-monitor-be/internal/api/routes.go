@@ -10,6 +10,7 @@ func SetupRoutes(
 	router *gin.Engine,
 	authHandler *handlers.AuthHandler,
 	videoAnalysisHandler *handlers.VideoAnalysisHandler,
+	userHandler *handlers.UserHandler, // Add this parameter
 ) {
 	// Public routes
 	public := router.Group("/api/v1")
@@ -22,8 +23,13 @@ func SetupRoutes(
 	protected := router.Group("/api/v1")
 	protected.Use(middleware.AuthMiddleware())
 	{
+		// Existing routes
 		protected.GET("/video-analyses", videoAnalysisHandler.GetAllVideoAnalyses)
 		protected.GET("/video-analyses/:videoId", videoAnalysisHandler.GetVideoAnalysisByID)
 		protected.GET("/video-analyses/nearby", videoAnalysisHandler.GetNearbyVideoAnalyses)
+
+		// New user routes
+		protected.GET("/users", userHandler.GetAllUsers)
+		protected.POST("/users", userHandler.AddUser)
 	}
 }

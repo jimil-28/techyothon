@@ -1,2 +1,4 @@
 # Firebase credentials
 firebase-config.json
+go.mod
+go.sum

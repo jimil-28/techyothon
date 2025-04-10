@@ -3,9 +3,9 @@ package models
 import "time"
 
 type Location struct {
-	Latitude  float64   `json:"latitude"`
-	Longitude float64   `json:"longitude"`
-	Timestamp time.Time `json:"timestamp"`
+	Latitude  float64 `firestore:"latitude"`
+	Longitude float64 `firestore:"longitude"`
+	Timestamp string  `firestore:"timestamp"` // Change to string
 }
 
 type Analysis struct {
@@ -18,11 +18,11 @@ type Analysis struct {
 }
 
 type VideoAnalysis struct {
-	VideoID       string    `json:"video_id"`
+	VideoID       string    `firestore:"video_id"`
 	VideoDuration float64   `json:"video_duration"`
-	Timestamp     time.Time `json:"timestamp"`
-	CreatedAt     time.Time `json:"created_at"`
-	Location      Location  `json:"location"`
-	Analysis      Analysis  `json:"analysis"`
-	FrameURLs     []string  `json:"frame_urls"`
+	Timestamp     time.Time `firestore:"timestamp"` // Change to time.Time
+	CreatedAt     time.Time `json:"created_at"`     // Change to time.Time
+	Location      Location  `firestore:"location"`
+	Analysis      Analysis  `firestore:"analysis"`
+	FrameURLs     []string  `firestore:"frame_urls"`
 }

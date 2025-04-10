@@ -29,6 +29,10 @@ func main() {
 		log.Fatalf("Failed to initialize logger: %v", err)
 	}
 
+	log.Printf("Twilio Account SID: %s", cfg.TwilioAccountSid)
+	log.Printf("Twilio Auth Token: %s", cfg.TwilioAuthToken)
+	log.Printf("Twilio Service SID: %s", cfg.TwilioServiceSid)
+
 	// Initialize Twilio client
 	twilioClient, err := twilio.NewTwilioClient(
 		cfg.TwilioAccountSid,
@@ -55,6 +59,7 @@ func main() {
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(authService)
 	videoAnalysisHandler := handlers.NewVideoAnalysisHandler(firebaseClient)
+	userHandler := handlers.NewUserHandler(firebaseClient) // Add this line
 
 	// Setup Gin router
 	router := gin.Default()
@@ -74,7 +79,7 @@ func main() {
 	})
 
 	// Setup routes
-	api.SetupRoutes(router, authHandler, videoAnalysisHandler)
+	api.SetupRoutes(router, authHandler, videoAnalysisHandler, userHandler)
 
 	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {

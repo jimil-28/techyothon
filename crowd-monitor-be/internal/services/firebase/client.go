@@ -14,15 +14,18 @@ import (
 	"firebase.google.com/go/v4/db"
 	"github.com/jimil-28/crowd-monitor/internal/models"
 	"github.com/jimil-28/crowd-monitor/internal/utils"
+	"github.com/twilio/twilio-go"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
 
 type Client struct {
-	app       *firebase.App
-	auth      *auth.Client
-	firestore *firestore.Client
-	database  *db.Client
+	app          *firebase.App
+	auth         *auth.Client
+	firestore    *firestore.Client
+	database     *db.Client
+	twilioClient *twilio.RestClient
+	serviceSid   string
 }
 
 func NewFirebaseClient(credentialsPath, databaseURL string) (*Client, error) {
@@ -61,6 +64,24 @@ func NewFirebaseClient(credentialsPath, databaseURL string) (*Client, error) {
 		auth:      auth,
 		firestore: firestore,
 		database:  database,
+	}, nil
+}
+
+func NewTwilioClient(accountSid, authToken, serviceSid string) (*Client, error) {
+	if accountSid == "" || authToken == "" || serviceSid == "" {
+		return nil, errors.New("missing Twilio credentials")
+	}
+
+	log.Printf("Initializing Twilio client with Account SID: %s, Service SID: %s", accountSid, serviceSid)
+
+	client := twilio.NewRestClientWithParams(twilio.ClientParams{
+		Username: accountSid,
+		Password: authToken,
+	})
+
+	return &Client{
+		twilioClient: client,
+		serviceSid:   serviceSid,
 	}, nil
 }
 
@@ -114,10 +135,20 @@ func (c *Client) GetAllVideoAnalyses(ctx context.Context) ([]models.VideoAnalysi
 
 		// Handle timestamps
 		if ts, ok := data["timestamp"].(string); ok {
-			analysis.Timestamp, _ = time.Parse(time.RFC3339Nano, ts)
+			parsedTime, err := time.Parse(time.RFC3339Nano, ts)
+			if err != nil {
+				log.Printf("Error parsing timestamp: %v", err)
+			} else {
+				analysis.Timestamp = parsedTime
+			}
 		}
 		if ts, ok := data["created_at"].(string); ok {
-			analysis.CreatedAt, _ = time.Parse(time.RFC3339Nano, ts)
+			parsedTime, err := time.Parse(time.RFC3339Nano, ts)
+			if err != nil {
+				log.Printf("Error parsing created_at: %v", err)
+			} else {
+				analysis.CreatedAt = parsedTime
+			}
 		}
 
 		// Handle location
@@ -127,7 +158,7 @@ func (c *Client) GetAllVideoAnalyses(ctx context.Context) ([]models.VideoAnalysi
 				Longitude: loc["longitude"].(float64),
 			}
 			if ts, ok := loc["timestamp"].(string); ok {
-				analysis.Location.Timestamp, _ = time.Parse(time.RFC3339Nano, ts)
+				analysis.Location.Timestamp = ts // Keep this as string as defined in the model
 			}
 		}
 
@@ -180,10 +211,20 @@ func (c *Client) GetVideoAnalysisByID(ctx context.Context, videoID string) (*mod
 	analysis.VideoDuration = data["video_duration"].(float64)
 
 	if ts, ok := data["timestamp"].(string); ok {
-		analysis.Timestamp, _ = time.Parse(time.RFC3339Nano, ts)
+		parsedTime, err := time.Parse(time.RFC3339Nano, ts)
+		if err != nil {
+			log.Printf("Error parsing timestamp: %v", err)
+		} else {
+			analysis.Timestamp = parsedTime
+		}
 	}
 	if ts, ok := data["created_at"].(string); ok {
-		analysis.CreatedAt, _ = time.Parse(time.RFC3339Nano, ts)
+		parsedTime, err := time.Parse(time.RFC3339Nano, ts)
+		if err != nil {
+			log.Printf("Error parsing created_at: %v", err)
+		} else {
+			analysis.CreatedAt = parsedTime
+		}
 	}
 
 	// ... rest of the parsing logic (same as above)
@@ -192,68 +233,95 @@ func (c *Client) GetVideoAnalysisByID(ctx context.Context, videoID string) (*mod
 }
 
 func (c *Client) GetVideoAnalysesNearby(ctx context.Context, lat, lon float64, radiusKm float64) ([]models.VideoAnalysis, error) {
-    utils.Logger.Printf("Fetching all video analyses from Firestore...")
-    
-    // Get collection reference
-    collection := c.firestore.Collection("video-analysis")
-    if collection == nil {
-        utils.Logger.Printf("Error: video-analysis collection not found")
-        return nil, fmt.Errorf("video-analysis collection not found")
-    }
+	utils.Logger.Printf("Fetching all video analyses from Firestore...")
 
-    // Get all documents
-    docs, err := collection.Documents(ctx).GetAll()
-    if err != nil {
-        utils.Logger.Printf("Error fetching documents: %v", err)
-        return []models.VideoAnalysis{}, err
-    }
+	// Get collection reference
+	collection := c.firestore.Collection("video-analysis")
+	if collection == nil {
+		utils.Logger.Printf("Error: video-analysis collection not found")
+		return nil, fmt.Errorf("video-analysis collection not found")
+	}
 
-    utils.Logger.Printf("Found %d total documents", len(docs))
-    var nearbyAnalyses []models.VideoAnalysis
+	// Get all documents
+	docs, err := collection.Documents(ctx).GetAll()
+	if err != nil {
+		utils.Logger.Printf("Error fetching documents: %v", err)
+		return []models.VideoAnalysis{}, err
+	}
 
-    for _, doc := range docs {
-        var analysis models.VideoAnalysis
-        if err := doc.DataTo(&analysis); err != nil {
-            utils.Logger.Printf("Error parsing document %s: %v", doc.Ref.ID, err)
-            continue
-        }
+	utils.Logger.Printf("Found %d total documents", len(docs))
+	var nearbyAnalyses []models.VideoAnalysis
 
-        distance := calculateDistance(
-            lat, lon,
-            analysis.Location.Latitude,
-            analysis.Location.Longitude,
-        )
+	for _, doc := range docs {
+		var analysis models.VideoAnalysis
+		if err := doc.DataTo(&analysis); err != nil {
+			utils.Logger.Printf("Error parsing document %s: %v", doc.Ref.ID, err)
+			continue
+		}
 
-        utils.Logger.Printf("Document %s is %.2f km away", analysis.VideoID, distance)
-        
-        if distance <= radiusKm {
-            nearbyAnalyses = append(nearbyAnalyses, analysis)
-            utils.Logger.Printf("Added document %s to results (within range)", analysis.VideoID)
-        }
-    }
+		utils.Logger.Printf("Parsed document %s: Latitude=%f, Longitude=%f", analysis.VideoID, analysis.Location.Latitude, analysis.Location.Longitude)
 
-    utils.Logger.Printf("Returning %d nearby analyses", len(nearbyAnalyses))
-    return nearbyAnalyses, nil
+		distance := calculateDistance(
+			lat, lon,
+			analysis.Location.Latitude,
+			analysis.Location.Longitude,
+		)
+
+		utils.Logger.Printf("Document %s is %.2f km away", analysis.VideoID, distance)
+
+		if distance <= radiusKm {
+			nearbyAnalyses = append(nearbyAnalyses, analysis)
+			utils.Logger.Printf("Added document %s to results (within range)", analysis.VideoID)
+		}
+	}
+
+	utils.Logger.Printf("Returning %d nearby analyses", len(nearbyAnalyses))
+	return nearbyAnalyses, nil
 }
 
 // calculateDistance returns distance in kilometers between two points using Haversine formula
 func calculateDistance(lat1, lon1, lat2, lon2 float64) float64 {
-    const R = 6371 // Earth's radius in kilometers
+	const R = 6371 // Earth's radius in kilometers
 
-    lat1Rad := lat1 * math.Pi / 180
-    lat2Rad := lat2 * math.Pi / 180
-    lon1Rad := lon1 * math.Pi / 180
-    lon2Rad := lon2 * math.Pi / 180
+	lat1Rad := lat1 * math.Pi / 180
+	lat2Rad := lat2 * math.Pi / 180
+	lon1Rad := lon1 * math.Pi / 180
+	lon2Rad := lon2 * math.Pi / 180
 
-    dlat := lat2Rad - lat1Rad
-    dlon := lon2Rad - lon1Rad
+	dlat := lat2Rad - lat1Rad
+	dlon := lon2Rad - lon1Rad
 
-    a := math.Sin(dlat/2)*math.Sin(dlat/2) +
-        math.Cos(lat1Rad)*math.Cos(lat2Rad)*
-            math.Sin(dlon/2)*math.Sin(dlon/2)
-    c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+	a := math.Sin(dlat/2)*math.Sin(dlat/2) +
+		math.Cos(lat1Rad)*math.Cos(lat2Rad)*
+			math.Sin(dlon/2)*math.Sin(dlon/2)
+	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
 
-    return R * c
+	distance := R * c
+	utils.Logger.Printf("Calculated distance: %.2f km between (%f, %f) and (%f, %f)", distance, lat1, lon1, lat2, lon2)
+	return distance
+}
+
+func (c *Client) GetAllUsers(ctx context.Context) ([]models.User, error) {
+	iter := c.firestore.Collection("users").Documents(ctx)
+	var users []models.User
+
+	for {
+		doc, err := iter.Next()
+		if err != nil {
+			if err == iterator.Done {
+				break
+			}
+			return nil, err
+		}
+
+		var user models.User
+		if err := doc.DataTo(&user); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	return users, nil
 }
 
 func (c *Client) Close() {
