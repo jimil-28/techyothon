@@ -1,0 +1,32 @@
+2025/04/11 00:31:36 video-analyses.go:53: Starting nearby video analyses search...
+2025/04/11 00:31:36 video-analyses.go:77: Searching for videos near coordinates: 15.498900, 73.827800
+2025/04/11 00:31:36 client.go:195: Fetching all video analyses from Firestore...
+2025/04/11 00:31:36 client.go:211: Found 10 total documents
+2025/04/11 00:31:36 client.go:217: Error parsing document 022c8646-ba99-4850-bd10-778905ac411e: models.VideoAnalysis.Location: models.Location.Timestamp: firestore: cannot set type time.Time to string
+2025/04/11 00:31:36 client.go:217: Error parsing document 04ad4b00-ab2d-430f-b956-842e03efafaa: models.VideoAnalysis.Timestamp: firestore: cannot set type time.Time to string
+2025/04/11 00:31:36 client.go:217: Error parsing document 1078374f-76e2-455d-b56d-79faeb1776e5: models.VideoAnalysis.Location: models.Location.Timestamp: firestore: cannot set type time.Time to string
+2025/04/11 00:31:36 client.go:217: Error parsing document 12f2d017-9d3a-4a2e-89cf-7241a30af250: models.VideoAnalysis.Timestamp: firestore: cannot set type time.Time to string
+2025/04/11 00:31:36 client.go:217: Error parsing document 1c6dd777-7f29-405a-a0aa-a117cd7f88c6: models.VideoAnalysis.Timestamp: firestore: cannot set type time.Time to string
+2025/04/11 00:31:36 client.go:217: Error parsing document 2dc1866a-32ec-4a97-9728-fcf70bfaedf9: models.VideoAnalysis.Location: models.Location.Timestamp: firestore: cannot set type time.Time to string
+2025/04/11 00:31:36 client.go:217: Error parsing document 930efa14-8c74-49f4-a900-0d1659e8c4f0: models.VideoAnalysis.Location: models.Location.Timestamp: firestore: cannot set type time.Time to string
+2025/04/11 00:31:36 client.go:217: Error parsing document c80b47de-2cf3-4f83-b270-487a0a760dec: models.VideoAnalysis.Location: models.Location.Timestamp: firestore: cannot set type time.Time to string
+2025/04/11 00:31:36 client.go:217: Error parsing document d76b98ae-cf6a-4877-a990-6292275eb0b4: models.VideoAnalysis.Location: models.Location.Timestamp: firestore: cannot set type time.Time to string
+2025/04/11 00:31:36 client.go:217: Error parsing document f70f3cc5-3d1a-4342-bf94-586b99bd31e9: models.VideoAnalysis.Timestamp: firestore: cannot set type time.Time to string
+2025/04/11 00:31:36 client.go:235: Returning 0 nearby analyses
+2025/04/11 00:31:36 video-analyses.go:96: Found 0 video analyses within 10.0 km
+2025/04/11 00:35:05 video-analyses.go:53: Starting nearby video analyses search...
+2025/04/11 00:35:05 video-analyses.go:77: Searching for videos near coordinates: 15.596983, 73.791317
+2025/04/11 00:35:05 client.go:195: Fetching all video analyses from Firestore...
+2025/04/11 00:35:06 client.go:211: Found 10 total documents
+2025/04/11 00:35:06 client.go:217: Error parsing document 022c8646-ba99-4850-bd10-778905ac411e: models.VideoAnalysis.Timestamp: firestore: cannot set type time.Time to string
+2025/04/11 00:35:06 client.go:217: Error parsing document 04ad4b00-ab2d-430f-b956-842e03efafaa: models.VideoAnalysis.Location: models.Location.Timestamp: firestore: cannot set type time.Time to string
+2025/04/11 00:35:06 client.go:217: Error parsing document 1078374f-76e2-455d-b56d-79faeb1776e5: models.VideoAnalysis.Location: models.Location.Timestamp: firestore: cannot set type time.Time to string
+2025/04/11 00:35:06 client.go:217: Error parsing document 12f2d017-9d3a-4a2e-89cf-7241a30af250: models.VideoAnalysis.Timestamp: firestore: cannot set type time.Time to string
+2025/04/11 00:35:06 client.go:217: Error parsing document 1c6dd777-7f29-405a-a0aa-a117cd7f88c6: models.VideoAnalysis.Location: models.Location.Timestamp: firestore: cannot set type time.Time to string
+2025/04/11 00:35:06 client.go:217: Error parsing document 2dc1866a-32ec-4a97-9728-fcf70bfaedf9: models.VideoAnalysis.Timestamp: firestore: cannot set type time.Time to string
+2025/04/11 00:35:06 client.go:217: Error parsing document 930efa14-8c74-49f4-a900-0d1659e8c4f0: models.VideoAnalysis.Location: models.Location.Timestamp: firestore: cannot set type time.Time to string
+2025/04/11 00:35:06 client.go:217: Error parsing document c80b47de-2cf3-4f83-b270-487a0a760dec: models.VideoAnalysis.Location: models.Location.Timestamp: firestore: cannot set type time.Time to string
+2025/04/11 00:35:06 client.go:217: Error parsing document d76b98ae-cf6a-4877-a990-6292275eb0b4: models.VideoAnalysis.Location: models.Location.Timestamp: firestore: cannot set type time.Time to string
+2025/04/11 00:35:06 client.go:217: Error parsing document f70f3cc5-3d1a-4342-bf94-586b99bd31e9: models.VideoAnalysis.Location: models.Location.Timestamp: firestore: cannot set type time.Time to string
+2025/04/11 00:35:06 client.go:235: Returning 0 nearby analyses
+2025/04/11 00:35:06 video-analyses.go:96: Found 0 video analyses within 10.0 km

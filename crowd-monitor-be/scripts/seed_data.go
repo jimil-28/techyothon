@@ -4,191 +4,130 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"math/rand"
+	"net/http"
+	"os"
 	"time"
 
 	firebase "firebase.google.com/go/v4"
 	"google.golang.org/api/option"
 )
 
+func init() {
+	// Create logs directory if it doesn't exist
+	if err := os.MkdirAll("logs", 0755); err != nil {
+		log.Fatal("Failed to create logs directory:", err)
+	}
+
+	// Set up logging to file
+	logFile := fmt.Sprintf("logs/seed_data_%s.log", time.Now().Format("2006-01-02_15-04-05"))
+	f, err := os.OpenFile(logFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatal("Failed to open log file:", err)
+	}
+
+	// Set log output to both file and console
+	log.SetOutput(f)
+	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+	log.Println("=== Seed Data Script Started ===")
+}
+
 // User profile data
 type User struct {
-	PhoneNumber string `firestore:"phone_number"`
-	Name        string `firestore:"name"`
-	Rank        string `firestore:"rank"`
-	Department  string `firestore:"department"`
+	PhoneNumber  string `firestore:"phone_number"`
+	Name         string `firestore:"name"`
+	Rank         string `firestore:"rank"`
+	Department   string `firestore:"department"`
 	IDCardNumber string `firestore:"id_card_number"`
 }
 
-// Location data
-type Location struct {
-	ID            string   `firestore:"id"`
-	Name          string   `firestore:"name"`
-	IsOvercrowded bool     `firestore:"is_overcrowded"`
-	CameraIDs     []string `firestore:"camera_ids"`
-}
-
-// Camera data
-type Camera struct {
-	ID                      string   `firestore:"id"`
-	LocationID              string   `firestore:"location_id"`
-	CrowdCount              int      `firestore:"crowd_count"`
-	PoliceInterventionNeeded bool     `firestore:"police_intervention_needed"`
-	InterventionSuggestions []string `firestore:"intervention_suggestions"`
-}
-
 func main() {
-	// Initialize seed for randomization
-	rand.Seed(time.Now().UnixNano())
+	defer log.Println("=== Seed Data Script Ended ===")
 
 	// Initialize Firebase app
+	log.Println("Initializing Firebase app...")
 	ctx := context.Background()
 	opt := option.WithCredentialsFile("./firebase-credentials.json")
+
+	// Log Firebase configuration details
+	log.Printf("Using credentials file: %s", "./firebase-credentials.json")
+
 	app, err := firebase.NewApp(ctx, nil, opt)
 	if err != nil {
-		log.Fatalf("Failed to initialize Firebase app: %v", err)
+		log.Printf("ERROR: Failed to initialize Firebase app: %v", err)
+		fmt.Printf("Status: %d - Internal Server Error\n", http.StatusInternalServerError)
+		return
 	}
+	log.Println("Firebase app initialized successfully")
 
 	// Get Firestore client
+	log.Println("Creating Firestore client...")
 	client, err := app.Firestore(ctx)
 	if err != nil {
-		log.Fatalf("Failed to create Firestore client: %v", err)
+		log.Printf("ERROR: Failed to create Firestore client: %v", err)
+		fmt.Printf("Status: %d - Internal Server Error\n", http.StatusInternalServerError)
+		return
 	}
 	defer client.Close()
+	log.Println("Firestore client created successfully")
 
 	// Create users
 	users := []User{
 		{
-			PhoneNumber: "+919175045787",
-			Name:        "Rajesh Kumar",
-			Rank:        "ASI",
-			Department:  "Madgaon Police Department",
+			PhoneNumber:  "+919175045787",
+			Name:         "Rajesh Kumar",
+			Rank:         "ASI",
+			Department:   "Madgaon Police Department",
 			IDCardNumber: "123",
 		},
 		{
-			PhoneNumber: "+919130232897",
-			Name:        "Priya Sharma",
-			Rank:        "SI",
-			Department:  "Vasco Police Department",
+			PhoneNumber:  "+919130232897",
+			Name:         "Priya Sharma",
+			Rank:         "SI",
+			Department:   "Vasco Police Department",
 			IDCardNumber: "456",
 		},
 		{
-			PhoneNumber: "+917708122103",
-			Name:        "Amit Patel",
-			Rank:        "PI",
-			Department:  "Panjim Police Department",
+			PhoneNumber:  "+917708122103",
+			Name:         "Amit Patel",
+			Rank:         "PI",
+			Department:   "Panjim Police Department",
 			IDCardNumber: "789",
 		},
 		{
-			PhoneNumber: "+919405061349",
-			Name:        "Kavita Naik",
-			Rank:        "DYSP",
-			Department:  "Mapusa Police Department",
+			PhoneNumber:  "+919405061349",
+			Name:         "Kavita Naik",
+			Rank:         "DYSP",
+			Department:   "Mapusa Police Department",
 			IDCardNumber: "321",
 		},
 	}
-
-	// Create locations
-	locations := []Location{
-		{
-			ID:            "loc1",
-			Name:          "Miramar Beach",
-			IsOvercrowded: true,
-			CameraIDs:     []string{"cam1", "cam2", "cam3"},
-		},
-		{
-			ID:            "loc2",
-			Name:          "Dona Paula",
-			IsOvercrowded: true,
-			CameraIDs:     []string{"cam4", "cam5", "cam6"},
-		},
-		{
-			ID:            "loc3",
-			Name:          "Colva Beach",
-			IsOvercrowded: false,
-			CameraIDs:     []string{"cam7", "cam8", "cam9"},
-		},
-		{
-			ID:            "loc4",
-			Name:          "Bodgini",
-			IsOvercrowded: true,
-			CameraIDs:     []string{"cam10", "cam11", "cam12"},
-		},
-		{
-			ID:            "loc5",
-			Name:          "Calangute Beach",
-			IsOvercrowded: true,
-			CameraIDs:     []string{"cam13", "cam14", "cam15"},
-		},
-		{
-			ID:            "loc6",
-			Name:          "Vasco Damodar Temple",
-			IsOvercrowded: false,
-			CameraIDs:     []string{"cam16", "cam17", "cam18"},
-		},
-	}
-
-	// Intervention suggestions
-	interventionSuggestions := []string{
-		"Immediately stop any further crowd flow towards this congested area.",
-		"Open or create multiple emergency exit routes away from the crush point to relieve pressure.",
-		"Deploy emergency responders (police, medical) to the immediate area for assistance and upstream to manage flow control and diversions.",
-		"Use clear, loud communication (e.g., loudspeakers) to instruct the crowd to stop pushing, remain calm if possible, and direct them towards available exit routes.",
-		"Set up barricades to redirect crowd flow and prevent further congestion.",
-		"Establish a command post near the affected area to coordinate response efforts.",
-		"Initiate evacuation procedures for the most densely packed areas first.",
-		"Dispatch additional personnel to manage crowd movement at key entry/exit points.",
-		"Activate emergency protocols for rapid response team deployment.",
-		"Implement traffic control measures in surrounding areas to facilitate emergency vehicle access.",
-	}
-
-	// Create cameras
-	var cameras []Camera
-	for _, loc := range locations {
-		for _, camID := range loc.CameraIDs {
-			// Select 3-5 random intervention suggestions
-			numSuggestions := rand.Intn(3) + 3 // 3 to 5 suggestions
-			suggestions := make([]string, numSuggestions)
-			
-			// Get random suggestions
-			for i := 0; i < numSuggestions; i++ {
-				suggestions[i] = interventionSuggestions[rand.Intn(len(interventionSuggestions))]
-			}
-			
-			cameras = append(cameras, Camera{
-				ID:                      camID,
-				LocationID:              loc.ID,
-				CrowdCount:              rand.Intn(400) + 50, // Random crowd between 50-450
-				PoliceInterventionNeeded: true,
-				InterventionSuggestions:  suggestions,
-			})
-		}
-	}
+	log.Printf("Preparing to seed %d users...", len(users))
 
 	// Batch write users
+	log.Println("Creating batch write operation...")
 	batch := client.Batch()
 	for _, user := range users {
 		ref := client.Collection("users").Doc(user.PhoneNumber)
 		batch.Set(ref, user)
+		log.Printf("Added user to batch: %s (%s)", user.Name, user.PhoneNumber)
 	}
 
-	// Batch write locations
-	for _, location := range locations {
-		ref := client.Collection("locations").Doc(location.ID)
-		batch.Set(ref, location)
-	}
-
-	// Batch write cameras
-	for _, camera := range cameras {
-		ref := client.Collection("cameras").Doc(camera.ID)
-		batch.Set(ref, camera)
-	}
-
-	// Commit the batch
-	_, err = batch.Commit(ctx)
+	// Commit the batch and check response
+	log.Println("Committing batch to Firestore...")
+	result, err := batch.Commit(ctx)
 	if err != nil {
-		log.Fatalf("Failed to commit batch: %v", err)
+		log.Printf("ERROR: Failed to seed data: %v", err)
+		fmt.Printf("Status: %d - Internal Server Error\n", http.StatusInternalServerError)
+		return
 	}
 
-	fmt.Println("Successfully seeded the database!")
+	if len(result) == len(users) {
+		log.Printf("SUCCESS: Successfully seeded all %d users", len(users))
+		fmt.Printf("Status: %d - Success\n", http.StatusCreated)
+		fmt.Printf("Successfully seeded %d users to the database!\n", len(users))
+	} else {
+		log.Printf("WARNING: Partial success - Only %d out of %d users were seeded", len(result), len(users))
+		fmt.Printf("Status: %d - Partial Success\n", http.StatusPartialContent)
+		fmt.Printf("Only %d out of %d users were seeded\n", len(result), len(users))
+	}
 }

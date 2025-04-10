@@ -17,11 +17,17 @@ import (
 	"github.com/jimil-28/crowd-monitor/internal/services/auth"
 	"github.com/jimil-28/crowd-monitor/internal/services/firebase"
 	"github.com/jimil-28/crowd-monitor/internal/services/twilio"
+	"github.com/jimil-28/crowd-monitor/internal/utils"
 )
 
 func main() {
 	// Load configuration
 	cfg := config.LoadConfig()
+
+	// Initialize logger
+	if err := utils.InitLogger(); err != nil {
+		log.Fatalf("Failed to initialize logger: %v", err)
+	}
 
 	// Initialize Twilio client
 	twilioClient, err := twilio.NewTwilioClient(
@@ -48,8 +54,7 @@ func main() {
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(authService)
-	locationsHandler := handlers.NewLocationsHandler(firebaseClient)
-	camerasHandler := handlers.NewCamerasHandler(firebaseClient)
+	videoAnalysisHandler := handlers.NewVideoAnalysisHandler(firebaseClient)
 
 	// Setup Gin router
 	router := gin.Default()
@@ -59,17 +64,17 @@ func main() {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-		
+
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(http.StatusNoContent)
 			return
 		}
-		
+
 		c.Next()
 	})
 
 	// Setup routes
-	api.SetupRoutes(router, authHandler, locationsHandler, camerasHandler)
+	api.SetupRoutes(router, authHandler, videoAnalysisHandler)
 
 	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {

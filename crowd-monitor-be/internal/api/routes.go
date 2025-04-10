@@ -9,8 +9,7 @@ import (
 func SetupRoutes(
 	router *gin.Engine,
 	authHandler *handlers.AuthHandler,
-	locationsHandler *handlers.LocationsHandler,
-	camerasHandler *handlers.CamerasHandler,
+	videoAnalysisHandler *handlers.VideoAnalysisHandler,
 ) {
 	// Public routes
 	public := router.Group("/api/v1")
@@ -23,7 +22,8 @@ func SetupRoutes(
 	protected := router.Group("/api/v1")
 	protected.Use(middleware.AuthMiddleware())
 	{
-		protected.GET("/locations", locationsHandler.GetAllLocations)
-		protected.GET("/locations/:locationId/cameras", camerasHandler.GetCamerasByLocation)
+		protected.GET("/video-analyses", videoAnalysisHandler.GetAllVideoAnalyses)
+		protected.GET("/video-analyses/:videoId", videoAnalysisHandler.GetVideoAnalysisByID)
+		protected.GET("/video-analyses/nearby", videoAnalysisHandler.GetNearbyVideoAnalyses)
 	}
 }

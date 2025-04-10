@@ -1,0 +1,7 @@
+2025/04/10 22:20:19 seed_data.go:31: === Seed Data Script Started ===
+2025/04/10 22:20:19 seed_data.go:47: Initializing Firebase app...
+2025/04/10 22:20:19 seed_data.go:52: Using credentials file: ./firebase-credentials.json
+2025/04/10 22:20:19 seed_data.go:60: Firebase app initialized successfully
+2025/04/10 22:20:19 seed_data.go:63: Creating Firestore client...
+2025/04/10 22:20:19 seed_data.go:66: ERROR: Failed to create Firestore client: project id is required to access Firestore
+2025/04/10 22:20:19 seed_data.go:68: === Seed Data Script Ended ===
